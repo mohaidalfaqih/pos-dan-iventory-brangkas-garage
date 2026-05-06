@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * PALET WARNA — selaras dengan halaman login
+ * ------------------------------------------
+ * Navy gelap  : #0d2d52
+ * Biru utama  : #184E77
+ * Biru medium : #2B648F
+ * Biru form   : #1b3a5e
+ */
+
+/* ── Tombol utama (bg-slate-900) → biru navy ── */
+.bg-slate-900 {
+    background-color: #0d2d52 !important;
+}
+.hover\:bg-slate-800:hover {
+    background-color: #184E77 !important;
+}
+.bg-slate-950 {
+    background-color: #0a2040 !important;
+}
+
+/* ── Semua tombol semi-bold ── */
+button,
+a[class*="rounded"],
+input[type="submit"],
+input[type="button"] {
+    font-weight: 600;
+}
+
+/* ── Focus ring selaras ── */
+.focus\:ring-indigo-500:focus {
+    --tw-ring-color: #184E77 !important;
+}
+.focus\:border-blue-500:focus {
+    border-color: #184E77 !important;
+}
+.text-indigo-600 {
+    color: #184E77 !important;
+}
+
+/* ── Checkbox & radio warna selaras ── */
+input[type="checkbox"]:checked,
+input[type="radio"]:checked {
+    background-color: #184E77;
+    border-color: #184E77;
+}
+
+/* ── Link aktif sidebar ── */
+.bg-white\/20 {
+    background-color: rgba(255,255,255,0.18) !important;
+}
+
+/* ── Badge merah tetap merah ── */
+.bg-red-500 { background-color: #ef4444 !important; }
+.bg-red-600 { background-color: #dc2626 !important; }
+.hover\:bg-red-700:hover { background-color: #b91c1c !important; }
