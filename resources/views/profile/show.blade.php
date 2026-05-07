@@ -140,7 +140,7 @@
         @elseif($step === 'confirm')
 
             <div class="mb-5 px-4 py-3 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700 font-medium">
-                ✅ Kode verifikasi valid! Konfirmasi untuk mengubah email ke
+                Kode verifikasi valid! Konfirmasi untuk mengubah email ke
                 <strong>{{ $newEmail }}</strong>.
             </div>
 

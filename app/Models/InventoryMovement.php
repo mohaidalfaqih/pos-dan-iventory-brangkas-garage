@@ -8,9 +8,10 @@ class InventoryMovement extends Model
 {
     protected $fillable = [
         'sparepart_id',
-        'type',     // IN / OUT
+        'type',
         'qty',
         'note',
+        'reference_id',
         'user_id',
     ];
 

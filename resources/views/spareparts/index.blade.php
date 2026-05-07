@@ -44,6 +44,10 @@
             </div>
 
             <div class="flex gap-2 flex-wrap">
+                <button class="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm hover:bg-slate-800 transition">
+                    Cari
+                </button>
+
                 <a href="{{ route('spareparts.index', array_filter(['q'=>$q])) }}"
                    class="px-3 py-2 rounded-xl text-sm {{ empty($stock) ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700' }}">
                     Semua
@@ -58,10 +62,6 @@
                    class="px-3 py-2 rounded-xl text-sm {{ ($stock==='out') ? 'bg-red-600 text-white' : 'bg-red-100 text-red-700' }}">
                     Stok Habis
                 </a>
-
-                <button class="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm hover:bg-slate-800 transition">
-                    Cari
-                </button>
             </div>
         </form>
     </div>

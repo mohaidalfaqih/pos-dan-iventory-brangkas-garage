@@ -30,7 +30,7 @@
             <div>
                 <div class="text-sm text-slate-500">Invoice</div>
                 <div class="text-lg font-semibold">
-                    {{ $transaction->invoice ?? ('TRX-'.$transaction->id) }}
+                    {{ $transaction->invoice ?? ('TRX-'.str_pad($transaction->id, 4, '0', STR_PAD_LEFT)) }}
                 </div>
 
                 <div class="mt-3 text-sm text-slate-500">Pembeli</div>
@@ -131,7 +131,7 @@ function cetakStrukDetail() {
         + '@media print{.no-print{display:none;}}</style></head><body>'
         + '<h2>Brangkas Garage</h2><p>Inventori & POS Suku Cadang</p><hr>'
         + '<p>{{ $transaction->created_at->format("d/m/Y H:i") }}</p>'
-        + '<p>Invoice: <b>{{ $transaction->invoice ?? "TRX-".$transaction->id }}</b></p>'
+        + '<p>Invoice: <b>{{ $transaction->invoice ?? ("TRX-".str_pad($transaction->id, 4, "0", STR_PAD_LEFT)) }}</b></p>'
         + '<p>Pembeli: <b>{{ $transaction->buyer_name }}</b></p><hr>'
         + '<table><tr><th>Kode</th><th>Nama</th><th>Qty</th><th>Harga</th><th>Total</th></tr>' + rows + '</table><hr>'
         + '<div class="row"><span>Total</span><span><b>Rp {{ number_format($transaction->total) }}</b></span></div>'

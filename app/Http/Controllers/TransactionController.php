@@ -9,7 +9,7 @@ class TransactionController extends Controller
 {
     public function index(Request $request)
     {
-        $q = $request->query('q');
+        $q        = $request->query('q');
         $dateFrom = $request->query('date_from');
         $dateTo   = $request->query('date_to');
 
@@ -22,33 +22,21 @@ class TransactionController extends Controller
                         ->orWhere('id', $q);
                 });
             })
-            ->when($dateFrom, function ($query) use ($dateFrom) {
-                $query->whereDate('created_at', '>=', $dateFrom);
-            })
-            ->when($dateTo, function ($query) use ($dateTo) {
-                $query->whereDate('created_at', '<=', $dateTo);
-            });
+            ->when($dateFrom, fn($q2) => $q2->whereDate('created_at', '>=', $dateFrom))
+            ->when($dateTo,   fn($q2) => $q2->whereDate('created_at', '<=', $dateTo));
 
         $totalRevenue = (clone $query)->sum('total');
 
-        $transactions = $query
-            ->latest()
-            ->paginate(12)
-            ->withQueryString();
+        $transactions = $query->latest()->paginate(12)->withQueryString();
 
         return view('transactions.index', compact(
-            'transactions',
-            'q',
-            'dateFrom',
-            'dateTo',
-            'totalRevenue'
+            'transactions', 'q', 'dateFrom', 'dateTo', 'totalRevenue'
         ));
     }
 
     public function show(Transaction $transaction)
     {
         $transaction->load('items');
-
         return view('transactions.show', compact('transaction'));
     }
 
@@ -69,64 +57,97 @@ class TransactionController extends Controller
             ->latest()
             ->get();
 
+        // Format angka Rupiah sebagai teks agar tidak jadi scientific notation di Excel
+        $rp = fn(int $n): string => number_format($n, 0, ',', '.');
+
         $filename = 'transaksi_' . now()->format('Ymd_His') . '.csv';
 
-        $headers = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-        ];
+        $output = fopen('php://temp', 'r+');
+        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF)); // BOM UTF-8
 
-        $callback = function () use ($transactions) {
-            $handle = fopen('php://output', 'w');
-            fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF)); // BOM UTF-8
+        // Baris header
+        fputcsv($output, [
+            'No', 'Tanggal', 'Invoice', 'Pembeli', 'Status',
+            'Kode', 'Nama Barang', 'Qty', 'Harga Satuan (Rp)', 'Subtotal (Rp)',
+            'Total Transaksi (Rp)', 'Dibayar (Rp)', 'Kembalian (Rp)',
+        ], ';');
 
-            // Header
-            fputcsv($handle, [
-                'No', 'Tanggal', 'Invoice', 'Pembeli', 'Status',
-                'Kode', 'Nama Barang', 'Qty', 'Harga Satuan (Rp)', 'Subtotal (Rp)',
-                'Total Transaksi (Rp)', 'Dibayar (Rp)', 'Kembalian (Rp)'
-            ], ';');
+        $no          = 1;
+        $grandTotal  = 0;
+        $grandPaid   = 0;
+        $grandChange = 0;
 
-            $no = 1;
-            foreach ($transactions as $trx) {
-                $items = $trx->items;
-                $change = max(0, ($trx->paid ?? 0) - ($trx->total ?? 0));
+        foreach ($transactions as $trx) {
+            $items   = $trx->items;
+            $change  = max(0, ($trx->paid ?? 0) - ($trx->total ?? 0));
+            $invoice = $trx->invoice ?? ('TRX-' . str_pad($trx->id, 4, '0', STR_PAD_LEFT));
 
-                if ($items->isEmpty()) {
-                    fputcsv($handle, [
-                        $no++,
-                        "\t" . $trx->created_at->format('d-m-Y H:i'),
-                        $trx->invoice,
-                        $trx->buyer_name,
-                        $trx->status ?? 'OK',
-                        '-', '-', 0, 0, 0,
-                        $trx->total ?? 0,
-                        $trx->paid ?? 0,
-                        $change,
+            $grandTotal  += (int) ($trx->total ?? 0);
+            $grandPaid   += (int) ($trx->paid  ?? 0);
+            $grandChange += (int) $change;
+
+            if ($items->isEmpty()) {
+                fputcsv($output, [
+                    $no++,
+                    "\t" . $trx->created_at->format('d-m-Y H:i'),
+                    $invoice,
+                    $trx->buyer_name,
+                    $trx->status ?? 'OK',
+                    '-', '-', 0, 0, 0,
+                    $rp((int) ($trx->total ?? 0)),
+                    $rp((int) ($trx->paid  ?? 0)),
+                    $rp((int) $change),
+                ], ';');
+            } else {
+                foreach ($items as $i => $item) {
+                    $kode     = ($item->sparepart && $item->sparepart->kode)
+                                    ? "\t" . $item->sparepart->kode
+                                    : ($item->kode ? "\t" . $item->kode : '-');
+                    $nama     = $item->sparepart->nama_barang ?? $item->nama ?? '-';
+                    $harga    = (int) $item->price;
+                    $subtotal = (int) ($item->qty * $item->price);
+
+                    fputcsv($output, [
+                        $i === 0 ? $no++ : '',
+                        $i === 0 ? "\t" . $trx->created_at->format('d-m-Y H:i') : '',
+                        $i === 0 ? $invoice : '',
+                        $i === 0 ? $trx->buyer_name : '',
+                        $i === 0 ? ($trx->status ?? 'OK') : '',
+                        $kode,
+                        $nama,
+                        (int) $item->qty,
+                        $rp($harga),
+                        $rp($subtotal),
+                        $i === 0 ? $rp((int) ($trx->total ?? 0)) : '',
+                        $i === 0 ? $rp((int) ($trx->paid  ?? 0)) : '',
+                        $i === 0 ? $rp((int) $change) : '',
                     ], ';');
-                } else {
-                    foreach ($items as $i => $item) {
-                        fputcsv($handle, [
-                            $i === 0 ? $no++ : '',
-                            $i === 0 ? "\t" . $trx->created_at->format('d-m-Y H:i') : '',
-                            $i === 0 ? $trx->invoice : '',
-                            $i === 0 ? $trx->buyer_name : '',
-                            $i === 0 ? ($trx->status ?? 'OK') : '',
-                    $item->sparepart->kode ? "\t" . $item->sparepart->kode : '-',
-                            $item->sparepart->nama_barang ?? '-',
-                            (int) $item->qty,
-                            (int) $item->price,
-                            (int) ($item->qty * $item->price),
-                            $i === 0 ? (int) ($trx->total ?? 0) : '',
-                            $i === 0 ? (int) ($trx->paid ?? 0) : '',
-                            $i === 0 ? (int) $change : '',
-                        ], ';');
-                    }
                 }
             }
-            fclose($handle);
-        };
+        }
 
-        return response()->stream($callback, 200, $headers);
+        // Baris kosong pemisah
+        fputcsv($output, [], ';');
+
+        // Baris TOTAL — sejajar dengan kolom Total Transaksi (Rp)
+        fputcsv($output, [
+            '', '', '', '', '', '', '', '', '',
+            'TOTAL KESELURUHAN',
+            $rp($grandTotal),
+            $rp($grandPaid),
+            $rp($grandChange),
+        ], ';');
+
+        rewind($output);
+        $csvContent = stream_get_contents($output);
+        fclose($output);
+
+        return response($csvContent, 200, [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Cache-Control'       => 'no-cache, no-store, must-revalidate',
+            'Pragma'              => 'no-cache',
+            'Expires'             => '0',
+        ]);
     }
 }

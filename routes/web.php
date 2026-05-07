@@ -9,6 +9,8 @@ use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VerificationCodeController;
 
+use App\Http\Controllers\RekapController;
+
 Route::get('/', function () {
     if (auth()->check()) {
         if (auth()->user()->role === 'kasir') {
@@ -28,6 +30,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/spareparts/{sparepart}/add-stock', [SparepartController::class, 'addStock'])->name('spareparts.addStock');
         Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
         Route::get('/inventory/export/csv', [InventoryController::class, 'exportCsv'])->name('inventory.export');
+        Route::get('/rekap', [RekapController::class, 'index'])->name('rekap.index');
+        Route::get('/rekap/export', [RekapController::class, 'exportCsv'])->name('rekap.export');
     });
 
     // KASIR ONLY: POS

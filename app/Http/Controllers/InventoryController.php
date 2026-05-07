@@ -67,36 +67,65 @@ class InventoryController extends Controller
 
         $filename = 'inventory_' . now()->format('Ymd_His') . '.csv';
 
-        $headers = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-        ];
+        // Build CSV in memory
+        $output = fopen('php://temp', 'r+');
+        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF)); // BOM UTF-8
 
-        $callback = function () use ($movements) {
-            $handle = fopen('php://output', 'w');
-            fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF)); // BOM UTF-8
+        fputcsv($output, [
+            'No', 'Tanggal', 'Kode', 'Nama Barang', 'Type', 'Qty', 'Catatan', 'ID Referensi', 'User'
+        ], ';');
 
-            fputcsv($handle, [
-                'No', 'Tanggal', 'Kode', 'Nama Barang', 'Type', 'Qty', 'Catatan', 'User'
-            ], ';');
+        $no       = 1;
+        $totalIn  = 0;
+        $totalOut = 0;
 
-            $no = 1;
-            foreach ($movements as $m) {
-                fputcsv($handle, [
-                    $no++,
-                    "\t" . optional($m->created_at)->format('d-m-Y H:i'),
-                    $m->sparepart->kode ? "\t" . $m->sparepart->kode : '-',
-                    $m->sparepart->nama_barang ?? '-',
-                    $m->type,
-                    (int) $m->qty,
-                    $m->note ?? '-',
-                    $m->user->name ?? '-',
-                ], ';');
+        foreach ($movements as $m) {
+            $refId = '';
+            if ($m->reference_id) {
+                $refId = $m->type === 'OUT'
+                    ? 'TRX-' . str_pad($m->reference_id, 4, '0', STR_PAD_LEFT)
+                    : 'SP-'  . str_pad($m->reference_id, 4, '0', STR_PAD_LEFT);
             }
 
-            fclose($handle);
-        };
+            if ($m->type === 'IN')  $totalIn  += (int) $m->qty;
+            if ($m->type === 'OUT') $totalOut += (int) $m->qty;
 
-        return response()->stream($callback, 200, $headers);
+            fputcsv($output, [
+                $no++,
+                "\t" . optional($m->created_at)->format('d-m-Y H:i'),
+                ($m->sparepart && $m->sparepart->kode) ? "\t" . $m->sparepart->kode : '-',
+                $m->sparepart->nama_barang ?? '-',
+                $m->type,
+                (int) $m->qty,
+                $m->note ?? '-',
+                $refId ?: '-',
+                $m->user->name ?? '-',
+            ], ';');
+        }
+
+        // Baris kosong pemisah
+        fputcsv($output, [], ';');
+
+        // Baris total IN
+        fputcsv($output, [
+            '', '', '', '', 'TOTAL MASUK (IN)', $totalIn, '', '', '',
+        ], ';');
+
+        // Baris total OUT
+        fputcsv($output, [
+            '', '', '', '', 'TOTAL KELUAR (OUT)', $totalOut, '', '', '',
+        ], ';');
+
+        rewind($output);
+        $csvContent = stream_get_contents($output);
+        fclose($output);
+
+        return response($csvContent, 200, [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Cache-Control'       => 'no-cache, no-store, must-revalidate',
+            'Pragma'              => 'no-cache',
+            'Expires'             => '0',
+        ]);
     }
 }

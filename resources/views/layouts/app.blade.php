@@ -108,6 +108,7 @@
                             ['/inventory',    'Riwayat Inventory'],
                             ['/pos',          'Kasir POS'],
                             ['/transactions', 'Riwayat Transaksi'],
+                            ['/rekap',        'Rekap Tahunan'],
                             ['/profile',      'Profil'],
                         ];
                         const found = titles.find(([p]) => path === p || path.startsWith(p + '/') || path.startsWith(p + '?'));

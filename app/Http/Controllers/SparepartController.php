@@ -131,10 +131,11 @@ class SparepartController extends Controller
 
             InventoryMovement::create([
                 'sparepart_id' => $sparepart->id,
-                'type' => 'IN',
-                'qty' => (int)$data['qty'],
-                'note' => 'Restock',
-                'user_id' => auth()->id(),
+                'type'         => 'IN',
+                'qty'          => (int)$data['qty'],
+                'note'         => 'Restock',
+                'reference_id' => $sparepart->id,
+                'user_id'      => auth()->id(),
             ]);
         });
 

@@ -5,6 +5,7 @@
 
     <div>
         <a href="{{ route('transactions.export', array_filter(['q' => $q ?? '', 'date_from' => $dateFrom ?? '', 'date_to' => $dateTo ?? ''])) }}"
+           target="_blank"
            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-semibold transition hover:opacity-90"
            style="background-color:#0d2d52;">
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -119,7 +120,7 @@
                         </td>
 
                         <td class="py-3 px-2 font-semibold text-slate-800">
-                            {{ $t->invoice ?? ('TRX-'.$t->id) }}
+                            {{ $t->invoice ?? ('TRX-'.str_pad($t->id, 4, '0', STR_PAD_LEFT)) }}
                         </td>
 
                         <td class="py-3 px-2 text-slate-700">

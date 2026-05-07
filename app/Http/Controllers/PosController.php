@@ -218,10 +218,11 @@ class PosController extends Controller
 
                     InventoryMovement::create([
                         'sparepart_id' => $sp->id,
-                        'type' => 'OUT',
-                        'qty' => $it['qty'],
-                        'note' => 'Penjualan POS #' . $trx->id . ' - ' . auth()->user()->name,
-                        'user_id' => auth()->id(),
+                        'type'         => 'OUT',
+                        'qty'          => $it['qty'],
+                        'note'         => 'Penjualan POS',
+                        'reference_id' => $trx->id,
+                        'user_id'      => auth()->id(),
                     ]);
                 }
 

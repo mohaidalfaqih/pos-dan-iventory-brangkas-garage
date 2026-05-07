@@ -91,7 +91,7 @@
         @elseif($step === 'input_password')
 
             <div class="mb-5 px-4 py-3 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700 font-medium">
-                ✅ Kode verifikasi valid! Silakan masukkan password baru Anda.
+                 Kode verifikasi valid! Silakan masukkan password baru Anda.
             </div>
 
             <form method="POST" action="{{ route('verification.update-password') }}">

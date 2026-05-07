@@ -113,6 +113,19 @@
             <span x-show="!sidebarMini">Riwayat Transaksi</span>
         </a>
 
+        {{-- Rekap Tahunan: admin saja --}}
+        @if(auth()->user()->role === 'admin')
+        <a href="{{ route('rekap.index') }}"
+           class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition font-semibold {{ request()->routeIs('rekap.*') ? 'border border-white/50' : '' }}">
+            <span class="shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+            </span>
+            <span x-show="!sidebarMini">Rekap Tahunan</span>
+        </a>
+        @endif
+
     </nav>
 
     {{-- FOOTER --}}
@@ -125,7 +138,7 @@
             @click="toggleSidebarMini()"
         >
             <span x-text="sidebarMini ? '»' : '«'"></span>
-            <span x-show="!sidebarMini">Kecilkan</span>
+            <span x-show="!sidebarMini">kecilkan</span>
         </button>
 
         <form method="POST" action="{{ route('logout') }}">

@@ -50,11 +50,17 @@ class DashboardController extends Controller
         $lowStockLimit = 3;
 
         $lowStockItems = Sparepart::where('stok', '<=', $lowStockLimit)
+            ->where('stok', '>', 0)
             ->orderBy('stok')
             ->limit(5)
             ->get();
 
         $outOfStock = (int) Sparepart::where('stok', 0)->count();
+
+        $outOfStockItems = Sparepart::where('stok', 0)
+            ->orderBy('nama_barang')
+            ->limit(5)
+            ->get();
 
         // ======================
         // TOP PRODUK
@@ -66,8 +72,28 @@ class DashboardController extends Controller
             ->get();
 
         // ======================
-        // GRAFIK 7 HARI
+        // REKAP TAHUNAN
         // ======================
+        $yearlyStats = collect();
+        $currentYear = now()->year;
+        // Ambil tahun-tahun yang ada di database
+        $availableYears = Transaction::selectRaw('YEAR(created_at) as year')
+            ->groupBy('year')
+            ->orderByDesc('year')
+            ->pluck('year');
+
+        foreach ($availableYears as $year) {
+            $yearRevenue      = (int) Transaction::whereYear('created_at', $year)->sum('total');
+            $yearTransactions = (int) Transaction::whereYear('created_at', $year)->count();
+            $yearlyStats->push([
+                'year'         => $year,
+                'revenue'      => $yearRevenue,
+                'transactions' => $yearTransactions,
+            ]);
+        }
+
+        // Grafik perbandingan omzet per tahun (bar)
+        $yearlyChart = $yearlyStats->sortBy('year')->values();
         $salesChart = Transaction::select(
                 DB::raw('DATE(created_at) as date'),
                 DB::raw('SUM(total) as total')
@@ -100,9 +126,12 @@ class DashboardController extends Controller
             'lowStockLimit',
             'lowStockItems',
             'outOfStock',
+            'outOfStockItems',
             'topProducts',
             'salesChart',
-            'monthlyChart'
+            'monthlyChart',
+            'yearlyStats',
+            'yearlyChart'
         ));
     }
 }

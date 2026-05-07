@@ -7,6 +7,7 @@
     <div>
         <div class="flex items-center justify-between">
             <a href="{{ route('inventory.export', array_filter(['q' => $q ?? '', 'date_from' => $dateFrom ?? '', 'date_to' => $dateTo ?? ''])) }}"
+               target="_blank"
                class="flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-semibold transition hover:opacity-90"
                style="background-color:#0d2d52;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -113,6 +114,7 @@
                         <th class="px-4 py-3 text-center">Type</th>
                         <th class="px-4 py-3 text-center">Qty</th>
                         <th class="px-4 py-3 text-left">Catatan</th>
+                        <th class="px-4 py-3 text-left">ID Ref</th>
                         <th class="px-4 py-3 text-left">User</th>
                     </tr>
                 </thead>
@@ -156,13 +158,29 @@
                                 {{ $m->note ?? '-' }}
                             </td>
 
+                            <td class="px-4 py-3 text-slate-600 font-mono text-xs">
+                                @if($m->reference_id)
+                                    @if($m->type === 'OUT')
+                                        <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                                            TRX-{{ str_pad($m->reference_id, 4, '0', STR_PAD_LEFT) }}
+                                        </span>
+                                    @else
+                                        <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                                            SP-{{ str_pad($m->reference_id, 4, '0', STR_PAD_LEFT) }}
+                                        </span>
+                                    @endif
+                                @else
+                                    -
+                                @endif
+                            </td>
+
                             <td class="px-4 py-3 text-slate-600">
                                 {{ $m->user->name ?? '-' }}
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-4 py-8 text-center text-slate-500">
+                            <td colspan="8" class="px-4 py-8 text-center text-slate-500">
                                 Belum ada riwayat inventory.
                             </td>
                         </tr>
